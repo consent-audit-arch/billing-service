@@ -1,0 +1,57 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: billing-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/billing_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/tcc}
+      client:
+        registration:
+          keycloak:
+            client-id: billing-service
+            client-secret: ${BILLING_SERVICE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/tcc/protocol/openid-connect/token}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+tcc:
+  security:
+    enabled: true
+    opa:
+      enabled: true
+      url: ${OPA_URL:http://localhost:8182/v1/data/billing/authz/decision}
+      timeout: 2s
+    headers:
+      purpose: X-Purpose
+      data-subject-id: X-Data-Subject-Id
+      correlation-id: X-Correlation-Id
+
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:8083}
