@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/billing")
 public class BillingController {
@@ -33,12 +35,24 @@ public class BillingController {
     }
 
     @GetMapping("/{id}/with-profile")
-    @RequiresConsent(resource = "BILLING_RECORD", action = "READ")
+    @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
+            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"})
     public ResponseEntity<BillingWithProfileResponse> findWithProfile(
             @PathVariable Long id,
             HttpServletRequest request) {
         String purpose = request.getHeader("X-Purpose");
         String correlationId = request.getHeader("X-Correlation-Id");
-        return ResponseEntity.ok(billingService.findWithProfile(id, purpose, correlationId));
+        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Categories"));
+        return ResponseEntity.ok(billingService.findWithProfile(id, purpose, dataCategories, correlationId));
+    }
+
+    private List<String> parseDataCategoriesHeader(String headerValue) {
+        if (headerValue == null || headerValue.isBlank()) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(headerValue.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

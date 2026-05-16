@@ -11,7 +11,9 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class UserServiceClient {
@@ -29,15 +31,20 @@ public class UserServiceClient {
         this.authorizedClientManager = authorizedClientManager;
     }
 
-    public UserProfileResponse fetchUserProfile(String dataSubjectId, String purpose, String correlationId) {
+    public UserProfileResponse fetchUserProfile(String dataSubjectId, String purpose, List<String> dataCategories, String correlationId) {
         String token = fetchClientCredentialsToken()
                 .orElseThrow(() -> new UserServiceCommunicationException(
                         "Failed to obtain client credentials token", null));
+
+        String dataCategoriesHeader = dataCategories.stream()
+                .collect(Collectors.joining(","));
 
         return restClient.get()
                 .uri("/api/v1/users/{id}", dataSubjectId)
                 .header("Authorization", "Bearer " + token)
                 .header("X-Purpose", purpose)
+                .header("X-Data-Category", dataCategories.isEmpty() ? "" : dataCategories.get(0))
+                .header("X-Data-Categories", dataCategoriesHeader)
                 .header("X-Data-Subject-Id", dataSubjectId)
                 .header("X-Correlation-Id", correlationId)
                 .accept(MediaType.APPLICATION_JSON)

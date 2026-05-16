@@ -8,6 +8,8 @@ import com.tcc.billing_service.infrastructure.client.UserServiceClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class BillingApplicationService {
@@ -39,12 +41,12 @@ public class BillingApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public BillingWithProfileResponse findWithProfile(Long id, String purpose, String correlationId) {
+    public BillingWithProfileResponse findWithProfile(Long id, String purpose, List<String> dataCategories, String correlationId) {
         BillingRecordResponse billing = findById(id);
 
         String resolvedCorrelationId = correlationId != null ? correlationId : java.util.UUID.randomUUID().toString();
         UserProfileResponse profile = userServiceClient.fetchUserProfile(
-                billing.getDataSubjectId(), purpose, resolvedCorrelationId);
+                billing.getDataSubjectId(), purpose, dataCategories, resolvedCorrelationId);
 
         return new BillingWithProfileResponse(billing, profile);
     }
