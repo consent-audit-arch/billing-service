@@ -3,6 +3,8 @@ package com.tcc.billing_service.interfaces.rest;
 import com.tcc.billing_service.application.dto.BillingRecordResponse;
 import com.tcc.billing_service.application.dto.BillingWithProfileResponse;
 import com.tcc.billing_service.application.dto.CreateBillingRecordCommand;
+import com.tcc.billing_service.application.dto.batch.BatchBillingRequest;
+import com.tcc.billing_service.application.dto.batch.BatchBillingResponse;
 import com.tcc.billing_service.application.service.BillingApplicationService;
 import com.tcc.security.annotation.RequiresConsent;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,6 +46,18 @@ public class BillingController {
         String correlationId = request.getHeader("X-Correlation-Id");
         List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Categories"));
         return ResponseEntity.ok(billingService.findWithProfile(id, purpose, dataCategories, correlationId));
+    }
+
+    @PostMapping("/batch")
+    @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
+            dataCategories = {"FINANCIAL_DATA"})
+    public ResponseEntity<BatchBillingResponse> findBatch(
+            @Valid @RequestBody BatchBillingRequest request,
+            HttpServletRequest httpRequest) {
+        String purpose = httpRequest.getHeader("X-Purpose");
+        String correlationId = httpRequest.getHeader("X-Correlation-Id");
+        List<String> dataCategories = parseDataCategoriesHeader(httpRequest.getHeader("X-Data-Categories"));
+        return ResponseEntity.ok(billingService.findBatch(request, purpose, dataCategories, correlationId));
     }
 
     private List<String> parseDataCategoriesHeader(String headerValue) {

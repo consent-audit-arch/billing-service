@@ -2,3 +2,6 @@ target/
 *.jar
 .env
 application-local.yml
+.idea/
+*.iml
+HELP.md
