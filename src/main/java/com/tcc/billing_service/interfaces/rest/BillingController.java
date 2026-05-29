@@ -38,7 +38,8 @@ public class BillingController {
 
     @GetMapping("/{id}/with-profile")
     @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
-            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"})
+            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"},
+            dataSubjectIdParam = "id")
     public ResponseEntity<BillingWithProfileResponse> findWithProfile(
             @PathVariable Long id,
             HttpServletRequest request) {
@@ -50,7 +51,7 @@ public class BillingController {
 
     @PostMapping("/batch")
     @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
-            dataCategories = {"FINANCIAL_DATA"})
+            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"})
     public ResponseEntity<BatchBillingResponse> findBatch(
             @Valid @RequestBody BatchBillingRequest request,
             HttpServletRequest httpRequest) {

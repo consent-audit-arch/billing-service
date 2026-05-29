@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+  flyway:
+    enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/tcc
+      client:
+        registration:
+          keycloak:
+            client-id: billing-service
+            client-secret: test
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            token-uri: http://localhost:8180/realms/tcc/protocol/openid-connect/token
+
+tcc:
+  security:
+    enabled: false
+    opa:
+      enabled: false
+
+user-service:
+  url: http://localhost:8083
