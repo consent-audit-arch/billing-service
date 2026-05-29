@@ -5,8 +5,6 @@ import future.keywords.if
 
 default decision := {"allow": false, "reason": "Denied by default"}
 
-allowed_purposes := {"BILLING", "ANALYTICS"}
-
 token_uri := opa.runtime().env.OPA_KEYCLOAK_TOKEN_URI
 client_id := opa.runtime().env.OPA_CLIENT_ID
 client_secret := opa.runtime().env.OPA_CLIENT_SECRET
@@ -57,14 +55,12 @@ decision := {"allow": true, "reason": "Batch partial success", "decisions": deci
     is_batch_request
     count(authorized_titulars) > 0
     "BILLING_READ" in input.caller.roles
-    input.purpose in allowed_purposes
 }
 
 decision := {"allow": false, "reason": "All titulars denied in batch", "decisions": decisions} if {
     is_batch_request
     count(authorized_titulars) == 0
     "BILLING_READ" in input.caller.roles
-    input.purpose in allowed_purposes
 }
 
 # ──────────────────────────────────────
@@ -101,7 +97,6 @@ decision_has_active_consent if {
 decision := {"allow": true, "reason": "Access granted"} if {
     not is_batch_request
     "BILLING_READ" in input.caller.roles
-    input.purpose in allowed_purposes
     input.dataSubjectId != null
     input.dataSubjectId != ""
     input.resource == "BILLING_RECORD"
@@ -118,16 +113,9 @@ decision := {"allow": false, "reason": "Caller does not have BILLING_READ role"}
     not ("BILLING_READ" in input.caller.roles)
 }
 
-decision := {"allow": false, "reason": "Purpose not allowed"} if {
-    not is_batch_request
-    "BILLING_READ" in input.caller.roles
-    not input.purpose in allowed_purposes
-}
-
 decision := {"allow": false, "reason": "Active consent not found for FINANCIAL_DATA"} if {
     not is_batch_request
     "BILLING_READ" in input.caller.roles
-    input.purpose in allowed_purposes
     input.dataSubjectId != null
     input.dataSubjectId != ""
     input.resource == "BILLING_RECORD"
