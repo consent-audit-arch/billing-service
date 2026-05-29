@@ -51,7 +51,8 @@ public class BillingController {
 
     @PostMapping("/batch")
     @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
-            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"})
+            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"},
+            dataSubjectIdsParam = "request.ids")
     public ResponseEntity<BatchBillingResponse> findBatch(
             @Valid @RequestBody BatchBillingRequest request,
             HttpServletRequest httpRequest) {
