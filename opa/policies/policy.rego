@@ -2,6 +2,7 @@ package billing.authz
 
 import future.keywords.in
 import future.keywords.if
+import future.keywords.every
 
 default decision := {"allow": false, "reason": "Denied by default"}
 
@@ -44,7 +45,7 @@ batch_consent_response := http.send({
     },
     "raw_body": json.marshal({
         "titularIds": input.dataSubjectIds,
-        "dataCategory": "FINANCIAL_DATA",
+        "dataCategory": concat(",", input.dataCategories),
         "purpose": input.purpose
     }),
     "timeout": "5s",
@@ -104,14 +105,17 @@ consent_response := http.send({
 
 consent_data := consent_response.body.authorizations if { not is_batch_request }
 
-decision_has_active_consent if {
+all_categories_consented if {
     not is_batch_request
     token_response.status_code == 200
     consent_response.status_code == 200
-    some auth in consent_data
-    auth.purpose == input.purpose
-    auth.dataCategory == "FINANCIAL_DATA"
-    auth.status == "GRANTED"
+    count(input.dataCategories) > 0
+    every category in input.dataCategories {
+        some auth in consent_data
+        auth.purpose == input.purpose
+        auth.dataCategory == category
+        auth.status == "GRANTED"
+    }
 }
 
 decision := {"allow": true, "reason": "Access granted"} if {
@@ -121,8 +125,7 @@ decision := {"allow": true, "reason": "Access granted"} if {
     input.dataSubjectId != ""
     input.resource == "BILLING_RECORD"
     input.action == "READ"
-    "FINANCIAL_DATA" in input.dataCategories
-    decision_has_active_consent
+    all_categories_consented
 }
 
 # ──────────────────────────────────────
@@ -133,13 +136,12 @@ decision := {"allow": false, "reason": "Caller does not have BILLING_READ role"}
     not ("BILLING_READ" in input.caller.roles)
 }
 
-decision := {"allow": false, "reason": "Active consent not found for FINANCIAL_DATA"} if {
+decision := {"allow": false, "reason": "Active consent not found for one or more required categories"} if {
     not is_batch_request
     "BILLING_READ" in input.caller.roles
     input.dataSubjectId != null
     input.dataSubjectId != ""
     input.resource == "BILLING_RECORD"
     input.action == "READ"
-    "FINANCIAL_DATA" in input.dataCategories
-    not decision_has_active_consent
+    not all_categories_consented
 }

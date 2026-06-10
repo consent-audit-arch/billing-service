@@ -37,16 +37,27 @@ public class BillingController {
     }
 
     @GetMapping("/{id}/with-profile")
-    @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
-            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"},
-            dataSubjectIdParam = "id")
     public ResponseEntity<BillingWithProfileResponse> findWithProfile(
             @PathVariable Long id,
             HttpServletRequest request) {
         String purpose = request.getHeader("X-Purpose");
         String correlationId = request.getHeader("X-Correlation-Id");
-        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Categories"));
+        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Category"));
         return ResponseEntity.ok(billingService.findWithProfile(id, purpose, dataCategories, correlationId));
+    }
+
+    @GetMapping("/users/{userId}/billing/{billingId}/with-profile")
+    @RequiresConsent(resource = "BILLING_RECORD", action = "READ",
+            dataCategories = {"FINANCIAL_DATA", "PERSONAL_DATA"},
+            dataSubjectIdParam = "userId")
+    public ResponseEntity<BillingWithProfileResponse> findWithProfileByUser(
+            @PathVariable Long userId,
+            @PathVariable Long billingId,
+            HttpServletRequest request) {
+        String purpose = request.getHeader("X-Purpose");
+        String correlationId = request.getHeader("X-Correlation-Id");
+        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Category"));
+        return ResponseEntity.ok(billingService.findWithProfileByUser(userId, billingId, purpose, dataCategories, correlationId));
     }
 
     @PostMapping("/batch")

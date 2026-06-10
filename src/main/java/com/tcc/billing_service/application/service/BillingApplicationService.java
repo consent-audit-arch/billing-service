@@ -58,6 +58,23 @@ public class BillingApplicationService {
     }
 
     @Transactional(readOnly = true)
+    public BillingWithProfileResponse findWithProfileByUser(Long userId, Long billingId, String purpose,
+                                                              List<String> dataCategories, String correlationId) {
+        BillingRecordResponse billing = findById(billingId);
+
+        if (!billing.getDataSubjectId().equals(userId.toString())) {
+            throw new IllegalArgumentException(
+                    "Billing record " + billingId + " does not belong to user " + userId);
+        }
+
+        String resolvedCorrelationId = correlationId != null ? correlationId : java.util.UUID.randomUUID().toString();
+        UserProfileResponse profile = userServiceClient.fetchUserProfile(
+                billing.getDataSubjectId(), purpose, dataCategories, resolvedCorrelationId);
+
+        return new BillingWithProfileResponse(billing, profile);
+    }
+
+    @Transactional(readOnly = true)
     public BatchBillingResponse findBatch(BatchBillingRequest request, String purpose,
                                            List<String> dataCategories, String correlationId) {
         List<PipTitularResult> decisions = ConsentAuthorizationAspect.getDecisionsFromRequest();
