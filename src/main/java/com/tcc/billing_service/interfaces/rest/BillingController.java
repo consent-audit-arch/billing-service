@@ -55,7 +55,7 @@ public class BillingController {
             @PathVariable Long billingId,
             HttpServletRequest request) {
         String purpose = request.getHeader("X-Purpose");
-        String correlationId = request.getHeader("X-Correlation-Id");
+        String correlationId = resolveCorrelationId(request);
         List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Category"));
         return ResponseEntity.ok(billingService.findWithProfileByUser(userId, billingId, purpose, dataCategories, correlationId));
     }
@@ -68,9 +68,17 @@ public class BillingController {
             @Valid @RequestBody BatchBillingRequest request,
             HttpServletRequest httpRequest) {
         String purpose = httpRequest.getHeader("X-Purpose");
-        String correlationId = httpRequest.getHeader("X-Correlation-Id");
+        String correlationId = resolveCorrelationId(httpRequest);
         List<String> dataCategories = parseDataCategoriesHeader(httpRequest.getHeader("X-Data-Categories"));
         return ResponseEntity.ok(billingService.findBatch(request, purpose, dataCategories, correlationId));
+    }
+
+    private static String resolveCorrelationId(HttpServletRequest request) {
+        String correlationId = (String) request.getAttribute("tcc-correlation-id");
+        if (correlationId != null) return correlationId;
+        correlationId = request.getHeader("X-Correlation-Id");
+        if (correlationId != null && !correlationId.isBlank()) return correlationId;
+        return java.util.UUID.randomUUID().toString();
     }
 
     private List<String> parseDataCategoriesHeader(String headerValue) {
