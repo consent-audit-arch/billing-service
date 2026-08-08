@@ -42,7 +42,7 @@ public class BillingController {
             HttpServletRequest request) {
         String purpose = request.getHeader("X-Purpose");
         String correlationId = request.getHeader("X-Correlation-Id");
-        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Category"));
+        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Categories"));
         return ResponseEntity.ok(billingService.findWithProfile(id, purpose, dataCategories, correlationId));
     }
 
@@ -56,7 +56,7 @@ public class BillingController {
             HttpServletRequest request) {
         String purpose = request.getHeader("X-Purpose");
         String correlationId = resolveCorrelationId(request);
-        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Category"));
+        List<String> dataCategories = parseDataCategoriesHeader(request.getHeader("X-Data-Categories"));
         return ResponseEntity.ok(billingService.findWithProfileByUser(userId, billingId, purpose, dataCategories, correlationId));
     }
 

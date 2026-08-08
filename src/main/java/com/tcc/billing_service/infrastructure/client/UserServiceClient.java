@@ -26,6 +26,15 @@ public class UserServiceClient {
     private final RestClient restClient;
     private final OAuth2AuthorizedClientManager authorizedClientManager;
 
+    private static RuntimeException mapUserServiceError(org.springframework.http.HttpStatusCode status, String dataSubjectId) {
+        if (status.isSameCodeAs(org.springframework.http.HttpStatus.FORBIDDEN)) {
+            return new com.tcc.security.exception.DataAccessDeniedException(
+                    "Acesso negado pelo serviço de dados do titular para o usuário " + dataSubjectId);
+        }
+        return new UserServiceCommunicationException(
+                "User service returned " + status + " for subject " + dataSubjectId, null);
+    }
+
     public UserServiceClient(@Value("${user-service.url}") String userServiceUrl,
                              OAuth2AuthorizedClientManager authorizedClientManager) {
         this.restClient = RestClient.builder()
@@ -46,16 +55,13 @@ public class UserServiceClient {
                 .uri("/api/v1/users/{id}", dataSubjectId)
                 .header("Authorization", "Bearer " + token)
                 .header("X-Purpose", purpose)
-                .header("X-Data-Category", dataCategories.isEmpty() ? "" : dataCategories.get(0))
                 .header("X-Data-Categories", dataCategoriesHeader)
                 .header("X-Data-Subject-Id", dataSubjectId)
                 .header("X-Correlation-Id", correlationId)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    throw new UserServiceCommunicationException(
-                            "User service returned " + response.getStatusCode() + " for subject " + dataSubjectId,
-                            null);
+                    throw mapUserServiceError(response.getStatusCode(), dataSubjectId);
                 })
                 .body(UserProfileResponse.class);
     }
@@ -81,7 +87,6 @@ public class UserServiceClient {
                 .uri("/api/v1/users/batch")
                 .header("Authorization", "Bearer " + token)
                 .header("X-Purpose", purpose)
-                .header("X-Data-Category", userServiceCategories.get(0))
                 .header("X-Data-Categories", dataCategoriesHeader)
                 .header("X-Data-Subject-Ids", dataSubjectIdsHeader)
                 .header("X-Correlation-Id", correlationId)
